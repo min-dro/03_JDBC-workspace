@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- xml 파일임을 알려줌 -->
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 
+    * !DOCTYPE configuration
+    
+    - 이 xml 문서의 형식이 configuration (== 환경설정) 임을 알려주는 부분
+	- 이 문서의 시작태그와 종료태그가 configuration 태그여야만 함!!    
+
+	* DTD
+	
+	- 이 문서의 유효성을 검사해주는 부분 (즉, 문법 체크를 해주는 부분)
+	- configuration 하위 태그들 내용 중 잘못된 태그가 있는지,
+	  테그 안의 속성 중에 누락된 속성들이 있는지 등을 검사해줌 (빨간 밑줄로 알려줌)
+-->
+<configuration>
+   <!-- 
+   	    * settings
+   	    
+   	    - 마이바티스 구동 시 필요한 설정값들을 제시하는 영역
+   	    - setting 이라는 단수형 태그를 안쪽에 작성하여 설정값들을 작성하되,
+   	      name 속성에는 설정명, value 속성에는 설정값을 작성함!! (개발자문서 참고)
+    -->
+   <settings>
+   		<setting name="jdbcTypeForNull" value="NULL" />
+   		<!-- 
+   			- jdbcTypeForNull : NULL 로 셋팅함
+   			  만약, insert 또는 update 시 빈 데이터가 전달되었다면
+   			  실제 테이블에 데이터가 들어갈 때 빈칸이 아닌 NULL 로 인식해서 넣어주겠다.
+   			  (무조건 대문자 NULL 로 셋팅해야함)
+   		 -->
+   </settings> 
+   
+   <!-- 
+   	    * typeAliases
+   	    
+   	    - VO (DTO) 클래스들의 풀 클래스명을 단순한 클래스명처럼 짧게 줄여서 사용하기 위해 별칭을 등록하는 영역
+   	      (마이바티스에서는 클래스명을 작성할 때 "풀 클래스명" 으로 작성해야함!!)
+   	    - type 속성에 풀 클래스명, alias 속성에 별칭을 작성한다.
+   	    - 단, VO (DTO) 가 반드시 만들어진 후에 설정을 해줘야함
+   	      (만약에 VO 가 없음에도 불구하고 typeAliases 설정을 먼저 하는 순간
+   	       내부적으로 ClassNotFoundException 오류가 발생한다!!)
+   -->
+    <typeAliases>
+    	<typeAlias type="com.kh.member.model.vo.Member" alias="member" />
+    </typeAliases>
+    
+    <!-- 
+    	* environments
+    	
+    	- Mybatis 에서 연동할 DB 의 정보들을 기술하는 영역
+    	  (여러개의 DB 정보를 등록할 수 있다)
+    	- environment 라는 복수형 태그 안쪽에 environment 라는 단수형 태그 1개 (DB 접속정보 1개)
+    	  단위로 DB 접속정보를 기술해주면 된다!!
+    	- 단, 각 DB 정보들을 구분할 수 있게끔 id 속성을 중복되지 않게 부여해 주고  
+    	  그 중 어떤 DB 를 현재 메인 DB 로 이용할건지 default 설정으로 지정하면 된다!!
+    	  (한번에 한개의 DB 에만 접속 가능하고, 다만 접속 정보만 여러개 저장해두는 부분이라고 보면 된다)
+     -->
+    <environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC" />
+			<!-- 
+				* transactionManager
+				
+				- 개발자인 내가 직접 트랜잭샨 처리를 할거냐 말거냐에 대한 설정
+				
+				1. JDBC : 트랜잭션을 개발자인 내가 직접 관리하겠다. (수동 커밋)
+				2. MANAGED : 개발자가 트랜잭션에 대해서 어떠한 영향도 행사하지 않겠다. (자동 커밋)
+			 -->
+			 <dataSource type="POOLED">
+			 	<property name="driver" value="oracle.jdbc.driver.OracleDriver" />
+			 	<property name="url" value="jdbc:oracle:thin:@localhost:1521:xe" />
+			 	<property name="username" value="JDBC" />
+			 	<property name="password" value="JDBC" />
+			 </dataSource>
+			 <!-- 
+			 	* dataSource
+			 	
+			 	- JDBC 과정에서 핵심적으로 필요한 Connection 객체에 대한 설정
+			 	  (Connection 객체 생성 시 필요한 접속 정보들, Connection 객체 재활용 여부 등) 을 지정하는 부분
+			 	  
+			 	참고) Connection Pool
+			 	
+			 	- 메모리 공간 내부에 Connection 객체를 담아둘 수 있는 영역
+			 	- 그동안 우리는 Connection Pool 을 사용하지 않고, 매번, 작업 (transaction) 하나가 일어날 떄 마다
+			 	  Connection 객체 생성 후 매번 작업 종료 후 Connection 객체를 매번 반납해줬었음!!
+			 	- 이제는 작업 (transaction) 하나가 일어날 때 마다 Connection 객체를 매번 생성하지 않고,
+			 	  초기에 Connection 객체를 단 한번만 생성해서 Connection Pool 공간에 보관해둘 것!!
+			 	  
+			 	1. POOLED : Connection Pool 을 이용하겠다. (매번 Connection 객체를 만들지 않겠다. 속도 빠름)
+			 	2. UNPOOLED : Connection Pool 을 이용하지 않겠다. (매번 Connection 객체를 만들겠다. 속도 느림)
+			 -->
+		</environment>
+	</environments>
+	<!-- 
+		* mappers
+		
+		- 마이바티스에서 실행할 SQL 문들을 담아둘 xml 파일을 mapper 파일 이라고 부른다!!
+		- 그 mapper 파일들의 경로를 등록하는 영역
+		- 단, xml 파일이 아직 없음에도 불구하고 파일 경로를 미리 등록하면 FileNotFoundException 이 발생함!!
+	 -->
+	<mappers>
+		<mapper resource="mappers/member-mapper.xml" />
+	</mappers>
+</configuration>

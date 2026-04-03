@@ -1,0 +1,5 @@
+package com.kh.member.common;
+
+public class Template { // 클래스 영역 시잗
+
+} // 클래스 영역 끝

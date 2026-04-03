@@ -1,0 +1,86 @@
+package com.kh.member.run;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
+public class MemberRun { // 클래스 영역 시작
+
+	public static void main(String[] args) { // main 영역 시작
+
+		// new MemberView().mainMenu();
+		
+		
+		/*
+		 * * Properties 복습
+		 * 
+		 * - Properties : Map 계열의 컬렉션
+		 *                Key + Value 세트로 저장하는 특징
+		 *                저장 순서 유지 X (즉, 인덱스 개념 X)
+		 * 				  Value 는 중복이 허용되나, Key 는 중복이 허용 안됨!!
+		 *                (중복된 Key 로 데이터를 추가하면 Value 값이 덮어씌워짐)
+		 *                
+		 * - Properties 를 사용하는 이유는
+		 *   주로 외부 설정파일 읽어오기 또는 파일 형태로 Key + Value 값을 출력하는 기능이 부가적으로 제공되기 떄문
+		 *   (파일 입출력에 특화된 Map 계열임)
+		 * - 주로 파일 입출력을 원할하게 하기 위해 Key, Value 모두 String 타입으로 통일해서 쓰는 편!!
+		 *   (제네릭 설정이 안되기 때문에 사실 아무 타입이나 다 담을수는 있는데, 주로 String 으로 의식해서 쓰는 편)
+		 */
+		
+		// Properties 객체 생성 후 데이터를 담고 .properties, .xml 파일로 내보내기 (출력, output)
+		/*
+		Properties prop = new Properties();
+		
+		// System.out.println(prop);
+		
+		prop.setProperty("List", "ArrayList");
+		prop.setProperty("Set", "HashSet");
+		prop.setProperty("Map", "Properties");
+		prop.setProperty("Map", "HashMap");
+		
+		// System.out.println(prop);
+		
+		try {
+			
+			// .properties 파일 형식으로 내보낼 경우
+			prop.store(new FileOutputStream("resources/test.properties"), "test");
+		
+			// .xml 파일 형식으로 내보낼 경우
+			prop.storeToXML(new FileOutputStream("resources/test.xml"), "test");
+			
+			// > FileNotFoundException: resources/test.properties (지정된 경로를 찾을 수 없습니다)
+			//   이유 : resources 라는 폴더가 존재하지 않기 떄문!! 
+			//          resources 라는 폴더를 직접 만들고 코드를 다시 실행시키면 해결됨
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		*/
+		
+		// .properties, .xml 파일 읽어들이기 (입력, input)
+		Properties prop = new Properties();
+		
+		System.out.println(prop);
+		
+		try {
+			
+			// .properties 형식의 파일로부터 읽어들이기
+			// prop.load(new FileInputStream("resources/test.properties"));
+		
+			// .xml 형식의 파일로부터 읽어들이기
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println(prop);
+		
+		// System.out.println(prop.getProperty("driver"));
+		// System.out.println(prop.getProperty("url"));
+		// System.out.println(prop.getProperty("username"));
+		// System.out.println(prop.getProperty("password"));
+	
+	
+	} // main 영역 끝
+
+} // 클래스 영역 끝

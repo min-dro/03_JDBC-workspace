@@ -1,0 +1,608 @@
+package com.kh.member.model.dao;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import com.kh.member.common.JDBCTemplate;
+import com.kh.member.model.vo.Member;
+
+/*
+ * * JDBC 용 객체
+ * 
+ * - Connection 
+ * DB 의 연결 정보를 담고 있는 객체 (url, 계정명, 비번)
+ * Connection 객체가 생성됨과 동시에 DB 에 접속됨
+ * 즉, Connection 객체가 생성되었다 == DB 에 접속되었다
+ * 
+ * - (Prepared)Statement
+ * 해당 DB 에 SQL문을 전달하고 실행한 후 결과를 받아내는 객체
+ * 즉, 볼일을 보는 객체 (입출력이 일어나게끔, JDBC 과정이 일어나게끔)
+ * 
+ * - ResultSet
+ * 만일 실행한 SQL 문이 SELECT 문일 경우 조회한 결과들이 담겨있는 객체
+ * (SELECT 문의 실행 결과를 RESULT SET 이라고 부름!!)
+ *
+ * * Statement (부모) 와 PreparedStatement (자식) 의 차이점
+ * 
+ * - Statement 같은 경우 완성된 SQL 문을 바로 실행하는 객체
+ *   SQL 문이 완성된 형태로 반드시 셋팅되어있어야만 한다!!
+ *   (즉, 사용자가 입력했던 값들이 문자열로 이미 다 채워진 상태)
+ *   
+ *   > Connection 객체를 가지고 Statement 객체를 생성
+ *     stmt = conn.createStatement(); // sql 문 전달 X
+ *     
+ *   > executeXxxx 메소드를 이용해서 SQL 문을 전달하면서 실행
+ *     결과 = executeXxxx(sql); // sql 문 전달 O
+ *   
+ * - PreparedStatement 같은 경우 SQL 문을 바로 실행하지 않고 잠시 보관을 해둘 수 있음!!
+ *   미완성된 SQL 문을 미리 넘겨서 가지고 있음!! (완성된 SQL 문을 넘겨도 상관 없다)
+ *   미완성된 SQL 문 : 쿼리문 중간중간에 나주엥 데이터가 들어갈 "구멍" 을 뚫어두겠다.
+ *   (단, 나중에 사용자가 입력한 값들이 들어갈 수 있도록 공간을 확보한 형태로 제시)
+ *   이때, SQL 문에 구멍을 뚫을 때에는 ? (? : 위치 홀더) 로 뚫는다.
+ *   SQL 문을 실행하기 전에 완성형태로 만든 후 실행
+ *     
+ *    > Connection 객체를 가지고 PreparedStatement 객체를 생성
+ *      pstmt = conn.prepareStatement(sql); // sql 문 전달 O - 미리 넘겨두기
+ *      
+ *    > 현재 담겨있는 SQL 문이 "미완성된" SQL 문일 경우
+ *      빈 공간들 (?) 를 실제 값으로 채워서 완성시키는 과정을 거쳐야 함!!
+ *      pstmt.setString(n, "실제값");
+ *      pstmt.setInt(n, 실제값);
+ *      - n : 몇번째 구멍인지를 나타냄 (1부터 셈)
+ *      
+ *    > executeXxxx 메소드를 이용해서 SQL 문을 실행
+ *      결과 = pstmt.executeXxxx(); // sql 문 전달 X - 위에서 미리 전달했기 때문
+ *    
+ * * JDBC 처리 순서
+ * 
+ * 1) JDBC Driver 등록
+ * 해당 DBMS 가 제공하는 클래스를 등록
+ * 
+ * 2) Connection 객체 생성 및 트랜잭션 관련 설정
+ * 접속할 DB 의 정보를 제시하면서 Connection 객체를 생성
+ * Connection 객체가 생성되었다는 것은 곧 DB 에 접속이 되었다 라는 것!!
+ * 이때, INSERT, UPDATE, DELETE 문을 실행하고자 할 경우에는 자동 커밋 해제 설정도 해준다.
+ * (개발자인 내가 직접 트랜잭션 처리를 하게끔)
+ * 
+ * 3_1) PreparedStatement 객체 생성
+ * Connection 객체를 이용해서 생성
+ * 이 때, SQL 문을 매개변수로 넘기면서 생성해야함 (미리 SQL 문을 보관하고 있겠다 라는 뜻)
+ * 
+ * 3_2) 현재 미완성된 SQL 문을 완성된 형태로 채워주는 과정
+ * 미완성된 SQL문을 보관하고 있을 경우에만 해당, 완성된 SQL 문을 보관하고 있을 경우 생략
+ * 
+ * 4) SQL 문 실행
+ * PreparedStatement 객체를 이용해서 SQL 문 실행
+ * (SQL 문을 매개변수로 넘기지 않음!!)
+ * - SELECT 문의 경우 : executeQuery 메소드
+ * - INSERT, UPDATE, DELETE 문의 경우 : executeUpdate 메소드
+ * 
+ * 5) 결과 받기
+ * - SELECT 문의 경우 : ResultSet 객체에 조회 결과가 담겨옴 => 6_1)
+ * - INSERT, UPDATEm DELETE 문의 경우 : int (추가, 수정, 삭제된 행의 갯수) => 6_2)
+ * 
+ * 6_1) ResultSet 에 담겨있는 조회된 데이터들을 하나씩 뽑아서 VO 객체로 옮겨담기
+ * 
+ * 6_2) 트랜잭션 처리 (성공 시 COMMIT, 실패 시 ROLLBACK)
+ * 
+ * 7) 다 쓴 JDBC 용 자원 반드시 (finally) 반납
+ * 이 때, 생성 순서의 역순으로 반납하기
+ * 
+ * 8) Controller 로 결과 반환
+ * - SELECT 문의 경우 : 6_1) 에서 만들어진 결과
+ *          	       단일행 조회일 경우 VO 한개, 여러행 조회일 경우 그 VO 들이 담겨있는 ArrayList
+ * - INSERT, UPDATE, DELETE 문의 경우 : int (추가, 수정, 삭제된 행의 갯수)
+ * 
+ * * JDBC 과정에 있어서 주로 Statement 는 거의 쓰지 않는다!!
+ * > 그대신 오늘 배운 PreparedStatement 를 더 사용하고 권장한다!!
+ * 
+ * 예) 회원 탈퇴 시 아이디 입력창에
+ * "a' OR 1 = 1 --" 를 입력했더니 Statement 버전의 프로그램은 데이터가 다 날라가 버렸음!!
+ * => SQL Inject Attack : 해킹 방법의 일종임!!
+ *    SQL 문 안에 그럴싸한 기존의 쿼리문과 결합하여 오동작 할 법한 것들을 입력해서 넣는 기법!!
+ *    
+ * SQL Inject Attack 을 방지하려면 PreparedStatement 를 이용해서 JDBC 과정을 하면 됨!!
+ * (알게 모르게 아까 밑에서 배워ㅆ던 pstmt.setString 메소드에 의해 문자열은 양 사이드에 '' 가 뭍음)
+ *
+ * => 앞으로는 우리 수업시간에 Statement 는 쓰지 않을 것!!
+ */
+
+public class MemberDao { // 클래스 영역 시작
+
+	/**
+	 * 회원 추가 요청 시
+	 * MEMBER 테이블에 INSERT 구문을 실행해주는 메소드
+	 * @param conn => 이미 DB 접속정보가 담겨있는 객체
+	 * @param m => 추가할 회원의 정보들이 담겨있는 객체
+	 * @return => insert 된 행의 갯수
+	 */
+	public int insertMember(Connection conn, Member m) {
+		// insert 문 => int (처리된 행의 갯수) => 트랜잭션 처리
+		
+		// 실행할 SQL 문 (미완성된 형태로, 세미콜론 X)
+		/*
+		INSERT INTO MEMBER VALUES(SEQ_USERNO.NEXTVAL
+                        , ?
+                        , ?
+                        , ?
+                        , ?
+                        , ?
+                        , ?
+                        , ?
+                        , ?
+                        , DEFAULT);
+		*/
+		/*
+		String sql = "INSERT INTO MEMBER VALUES (SEQ_USERNO.NEXTVAL"
+											+ ", ?"
+											+ ", ?"
+											+ ", ?"
+											+ ", ?"
+											+ ", ?"
+											+ ", ?"
+											+ ", ?"
+											+ ", ?"
+											+ ", DEFAULT)";
+		*/
+		// > 매번 문자열로 SQL 문을 연잇기는 귀찮음!! 실수할 가능성도 있음!!
+		
+		String sql = """
+				INSERT INTO MEMBER VALUES(SEQ_USERNO.NEXTVAL
+										, ?
+										, ?
+										, ?
+										, ?
+										, ?
+										, ?
+										, ?
+										, ?
+										, DEFAULT)
+				""";
+		// > 자바의 Text blocks (텍스트 블록)
+		//   Tab 키라던지 Enter 키 라던지 등등을 포함한 매우 긴 문자열을
+		//   """여기""" 에 작성할 수 있다!!
+		// > 참고로 JDK15 버전부터 지원되는 문법임!!
+		
+		// 0) 필요한 변수를 먼저 셋팅
+		int result = 0; // 처리된 행의 갯수를 담을 변수
+		
+		PreparedStatement pstmt = null; // SQL 문을 전달 실행용 객체 담을 변수
+		
+		try {
+			
+			// 3_1) SQL 문을 넘기면서 PreparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql);
+			
+			// 3_2) 미완성된 SQL 문일 경우에는 값을 채워줘야함
+			// [ 표현법 ]
+			// pstmt.setXxx(폴더순번, 매꿀값);
+			// - pstmt.setString(홀더순번, "메꿀값"); // 양 사이드에 '' 가 감싸짐 ('메꿀값')
+			// - pstmt.setInt(홀더순번, 메꿀값); // 그냥 값이 그 자리에 들어가게됨!!
+			pstmt.setString(1, m.getUserId());	
+			pstmt.setString(2, m.getUserPwd());
+			pstmt.setString(3, m.getUserName());
+			pstmt.setString(4, m.getGender());
+			pstmt.setInt(5, m.getAge());
+			pstmt.setString(6, m.getEmail());
+			pstmt.setString(7, m.getPhone());
+			pstmt.setString(8, m.getAddress());
+			
+			// System.out.println(sql);
+			// > PreparedStatement 의 최대 단점
+			//   완성된 SQL 문의 형태를 확인할 수 없다!!
+			
+			// 4, 5) SQL 문 실행 후 결과 받기
+			// - 실행할 쿼리문 : insert
+			// - 호출할 메소드명 : executeUpdate
+			result = pstmt.executeUpdate();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+					
+			// 7) 다 쓴 JDBC 용 자원 반납 (생성 순서의 역순)
+			JDBCTemplate.close(pstmt);
+		}
+		
+		// 8) Service 로 결과 반환
+		return result; // 처리된 행의 갯수 (성공이면 1, 실패면 0)
+
+	} // insertMember 끝
+
+	/**
+	 * 회원 전체 조회 요청 시
+	 * MEMBER 테이블에 SELECT * 구문을 실행해주는 메소드
+	 * @param conn => 이미 DB 접속 정보가 담겨있는 객체 (즉, 이미 접속이 됨)
+	 * @return => 조회된 회원들의 정보가 담겨있는 리스트
+	 */
+	public ArrayList<Member> selectAll(Connection conn) {
+		// select 문 => ResultSet 객체 (여러행 조회) => ArrayList<Member>
+		
+		// 실행할 SQL 문 (미완성되든 완성되는 사실 상관없음, 세미콜론 X)
+		String sql = """
+				SELECT * 
+				  FROM MEMBER
+				 ORDER BY USERNO ASC
+				""";
+		// > 완성된 쿼리문 또한 PreparedStatement 사용 가능!!
+		
+		// 0) 필요한 변수 먼저 설정
+		ArrayList<Member> list = new ArrayList<>(); // 최종 결과를 담을 변수
+		
+		PreparedStatement pstmt = null; // SQL 문을 넘기면서 실행 후 결과를 받아낼 변수
+		ResultSet rset = null; // 조회 결과가 담겨 올 변수
+		
+		try {
+			
+			// 3_1) SQL 문을 넘기면서 PreparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql); // sql 넘김
+			
+			// 3_2) 미완성된 SQL 문 일 경우 완성시키는 단계
+			// > 완성된 SQL 문 이므로 패스
+			
+			// 4, 5) SQL 문 실행 후 결과 받기
+			// - 실행할 쿼리문 : select
+			// - 호출할 메소드명 : executeQuery
+			rset = pstmt.executeQuery(); // sql 안넘김
+			
+			// 6_1) ResultSet 에 담긴 조회 결과를 VO 객체로 옮겨 담기
+			// > 여러행 조회 : 반복 횟수를 모르므로 while(rset.next())
+			while(rset.next()) {
+				
+				// 이 중괄호 안쪽으로 흐름이 들어왔다라는 것음
+				// 현재 커거사 가리키는 곳에 뽑아낼 데이터가 있다라는 뜻!!
+				// 한 명 --> 한개의 VO 로 옮기기 --> list 에 add
+		
+				Member m = new Member();
+		
+				// rest 으로부터 어떤 컬럼에 해당하는 값을 뽑을건지
+				// 컬럼명을 대문자로 제시 후 각 필드에 옮겨담기
+				
+				m.setUserNo(rset.getInt("USERNO"));
+				m.setUserId(rset.getString("USERID"));
+				m.setUserPwd(rset.getString("USERPWD"));
+				m.setUserName(rset.getString("USERNAME"));
+				m.setGender(rset.getString("GENDER"));
+				m.setAge(rset.getInt("AGE"));
+				m.setEmail(rset.getString("EMAIL"));
+				m.setPhone(rset.getString("PHONE"));
+				m.setAddress(rset.getString("ADDRESS"));
+				m.setEnrollate(rset.getDate("ENROLLDATE"));
+				
+				// 리스트에 해당 Member 객체를 Add
+				list.add(m);
+			}
+			
+			// 이 시점 기준으로 조회된 데이터가 없다면 list.isEmpty() == true
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {	
+			
+			// 7) 다 쓴 JDBC 용 자원 반납 (생성 순서의 역순) - conn 제외
+			JDBCTemplate.close(rset);
+			JDBCTemplate.close(pstmt);
+		}
+		
+		// 8) Controller 로 결과 반환
+		return list;
+		
+	} // selectAll 끝
+
+	/**
+	 * 아이디로 검색 요청 시
+	 * MEMBER 테이블에 SELECT 문을 실행해주는 메소드
+	 * @param conn => 이미 DB 접속 정보가 담겨있는 객체 (즉, 이미 접속이 됨)
+	 * @param userId => 검색할 회원의 아이디 (검색어)
+	 * @return => 조회된 한명의 회원의 정보
+	 */
+	public Member selectByUserId(Connection conn, String userId) {
+		// select 문 => ResultSet 객체 (단일행 조회) => Member
+		
+		// 실행할 SQL 문 (미완성된 형태로, 세미콜론 X)
+		String sql = """
+						SELECT *
+					  	  FROM MEMBER
+					 	 WHERE USERID = ?
+				""";
+		
+		// 0) 필요한 변수들 먼저 셋팅
+		Member m = null; // 최종 결과를 담을 변수
+		
+		PreparedStatement pstmt = null; // SQL 문 실행 후 결과를 받을 변수
+		ResultSet rset = null; // 조회 결과가 담겨올 변수
+		
+		try {
+			
+			// 3_1) SQL 문을 넘기면서 PreparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql); // 쿼리문 미리 넘기기
+			
+			// 3_2) 미완성된  SQL 문 완성시키기
+			pstmt.setString(1, userId);
+			
+			// 4, 5) SQL 문 실행 후 결과 받기
+			// - 실행할 쿼리문 : select
+			// - 호출할 메소드명 : executeQuery
+			rset = pstmt.executeQuery(); // 쿼리문을 넘기지 않음!!
+			
+			// 6_1) ResultSet 의 조회된 결과를 VO 로 옮겨담기
+			// > 단일행 조회이므로 커서는 한번만 옮겨도 되므로 if(rset.next())
+			if(rset.next()) {
+				
+				// 한 행 --> Member 객체 한개
+				m = new Member(rset.getInt("USERNO"),
+							  rset.getString("USERID"), 
+							  rset.getString("USERPWD"),
+							  rset.getString("USERNAME"),
+							  rset.getString("GENDER"),
+							  rset.getInt("AGE"),
+							  rset.getString("EMAIL"),
+							  rset.getString("PHONE"),
+							  rset.getString("ADDRESS"),
+							  rset.getDate("ENROLLDATE"));
+			}
+			
+			// 이 시점 기준으로 검색 결과가 없다면 m == null
+		
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			
+			// 7) 다 쓴 JDBC 용 자원 반납 (생성 순서의 역순) - conn 제외하고 반납
+			JDBCTemplate.close(rset);
+			JDBCTemplate.close(pstmt);
+		}
+			
+		// 8) Service 로 결과 리턴
+		return m;
+		
+	} // selectByUserId 끝
+
+	/**
+	 * 회원 이름 키워드 검색 요청 시
+	 * MEMBER 테이블에 SELECT 문을 실행시켜주는 메소드
+	 * @param keyword => 검색할 이름 키워드 (검색어)
+	 * @return => 검색 결과에 해당하는 회원들의 정보
+	 */
+	public ArrayList<Member> selectByUserName(Connection conn, String keyword) {
+		// select 문 => ResultSet (여러행 조회) => ArrayList<Member>
+		
+		// 실행할 SQL 문 (미완성된 형태로, 세미콜론 X)
+		/*
+		SELECT *
+  		  FROM MEMBER
+ 		 WHERE USERNAME LIKE '%XXX%'
+		*/
+		
+		/*
+		String sql = """
+						SELECT *
+						  FROM MEMBER
+						 WHERE USERNAME LIKE '%?%'
+				""";
+		// > 추후 아래에서 pstmt.setString(1, keyword); 로 완성시키면
+		//   '%'김'%' 으로 구명이 메꿔지게됨!! (문법 오류)
+		*/
+		
+		// 해결방법1)
+		/*
+		String sql = """
+						SELECT *
+						  FROM MEMBER
+						 WHERE USERNAME LIKE '%' || ? || '%'
+				""";
+		// > 추후 아래에서 pstmt.setString(1, keyword); 로 완성시키면
+		//   '%' || '김' || '%' --> '%김%' (문법 성립)
+		*/
+		
+		// 해결방법2)
+		String sql = """
+						SELECT *
+						  FROM MEMBER
+						 WHERE USERNAME LIKE ?
+				""";
+		// > 추후 아래에서 pstmt.setString(1, "%" + keyword + "%"); 로 완성시키면
+		//   '%김%' 으로 처음부터 들어가게 됨 (문법 성립)
+		
+		// > 항상 pstmt.setString(순번, 메꿀값); 는 메꿀값을 문자열 형태로 완성시키는 과정에서
+		//   양 사이드에 '' (홑따옴표, 오라클의 문자열 표기법) 를 씌워서 완성시켜준다!!
+		
+		// 0) 필요한 변수들 먼저 셋팅
+		ArrayList<Member> list = new ArrayList<>(); // 최종 결과를 담아둘 변수
+		
+		PreparedStatement pstmt = null; // SQL 문 실행 및 결과를 받아줄 변수
+		ResultSet rset = null; // 조회 결과가 당겨롤 변수
+		
+		try {
+
+			// 3_1) SQL 문을 넘기면서 PreparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql);
+			
+			// 3_2) 미완성된 SQL 문 완성시키기
+			pstmt.setString(1, "%" + keyword + "%");
+			
+			// 4, 5) SQL 문 실행 후 결과 받기
+			// - 실행할 쿼리문 : select
+			// - 호출할 메소드명 : executeQuery
+			rset = pstmt.executeQuery();
+			
+			// 6_1) ResultSet 에 조회된 데이터들을 VO 로 옮겨담기
+			// > 여러행 조회이므로 반복적으로 실행되게끔 while(rset.next())
+			while(rset.next()) {
+				
+				// 한 행 --> 한개의 Member 객체 --> list 에 add
+				
+	            list.add(new Member(rset.getInt("USERNO"),
+								    rset.getString("USERID"), 
+								    rset.getString("USERPWD"),
+								    rset.getString("USERNAME"),
+								    rset.getString("GENDER"),
+								    rset.getInt("AGE"),
+								    rset.getString("EMAIL"),
+								    rset.getString("PHONE"),
+								    rset.getString("ADDRESS"),
+								    rset.getDate("ENROLLDATE")));	
+			}
+			
+			// 만약 검색된 결과가 없다면 list.isEmpty() == true
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			
+			// 7) 다 쓴 JDBC 용 자원들 반납 (역순) - conn 제외
+			JDBCTemplate.close(rset);
+			JDBCTemplate.close(pstmt);
+		}
+		
+		// 8) Controller 로 결과 반환
+		return list;
+		
+	} // selectByUserName 끝
+
+	/**
+	 * 회원 정보 수정 요청 시
+	 * MEMBER 테이블에 UPDATE 문을 실행시켜주는 메소드
+	 * @param conn => 이미 DB 접속 정보가 담겨있는 객체 (즉, 이미 접속이 됨)
+	 * @param m => 전반적인 수정할 내용들이 들어있는 객체 (누구의, 어떻게)
+	 * @return => 수정된 행의 갯수
+	 */
+	public int updateMember(Connection conn, Member m) {
+		// update 문 => int (처리된 행의 갯수) => 트랜잭션 처리
+		
+		// 실행할 SQL 문 (미완성된 형태로, 세미콜론 X)
+		/*
+		UPDATE MEMBER
+		   SET USERPWD = 'XXXX'
+		     , EMAIL = 'XXXXX@XXX.XXX'
+		     , PHONE = 'XXXXXXXXXX'
+		     , ADDRESS = 'XXX XXX XXX'
+		 WHERE USERID = 'XXX';
+		*/
+		String sql = """
+						UPDATE MEMBER
+						   SET USERPWD = ?,
+							   EMAIL = ?,
+							   PHONE = ?,
+							   ADDRESS = ?
+						 WHERE USERID = ?
+				""";
+		
+		// 0) 필요한 변수들 먼저 셋팅
+		int result = 0; // 최종 결과를 담을 변수
+		
+		PreparedStatement pstmt = null; // SQL 문 실행 후 결과를 받아낼 변수
+		
+		try {
+			
+			// 3_1) SQL 문을 넘기면서 PreparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql);
+			
+			// 3_2) 미완성된 SQL 문 완성시키기
+			pstmt.setString(1, m.getUserPwd());
+			pstmt.setString(2, m.getEmail());
+			pstmt.setString(3, m.getPhone());
+			pstmt.setString(4, m.getAddress());
+			pstmt.setString(5, m.getUserId());
+			
+			// 4, 5) SQL 문 실행 후 결과 받기
+			// - 실행할 쿼리문 : update
+			// - 호출할 메소드명 : executeUpdate
+			result = pstmt.executeUpdate();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+				
+			// 7) 다 쓴 JDBC 용 자원 반납 (생성 순서의 역순) - conn 제외
+			JDBCTemplate.close(pstmt);
+		}
+		
+		// 8) Service 로 결과 반환
+		return result; // 성공 시 1, 실패 시 0
+		
+	} // updateMember 끝
+	
+	/**
+	 * 회원 탈퇴 요청 시
+	 * MEMBER 테이블에 DELETE 문을 실행시켜주는 메소드
+	 * @param conn => 이미 DB 접속 정보가 담겨있는 객체 (즉, 이미 접속이 됨)
+	 * @param userId => 탈퇴시킬 회원의 아이디
+	 * @return => 삭제된 행의 갯수
+	 */
+	public int deleteMember(Connection conn, String userId) {
+		// delete 문 => int (처리된 행의 갯수) => 트랜잭션 처리
+		
+		// 실행할 SQL 문 (미완성된 형태로, 세미콜론 X)
+		String sql = """
+						DELETE 
+						  FROM MEMBER
+						 WHERE USERID = ?
+				""";
+		
+		// 0) 필요한 변수들 먼저 셋팅
+		int result = 0; // 최종 결과를 담을 변수
+		
+		Connection conn = null; // DB 접속 정보를 담을 변수
+		PreparedStatement pstmt = null; // SQL 문 실행 후 결과를 받아낼 변수
+		
+		try {
+			
+			// 1) JDBC Driver 등록
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			
+			// 2) Connection 객체 생성 및 트랜잭션 설정
+			conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "JDBC", "JDBC");
+			
+			// 자동 커밋 해제
+			conn.setAutoCommit(false);
+			
+			// 3_1) SQL 문을 넘기면서 PreparedStatement 객체 생성
+			pstmt = conn.prepareStatement(sql);
+			
+			// 3_2) 미완성된 SQL 문 완성시키기
+			pstmt.setString(1, userId);
+			
+			// 4, 5) SQL 문 실행 후 결과 받기
+			// - 실행할 쿼리문 : delete
+			// - 호출할 메소드 : executeUpdate
+			result = pstmt.executeUpdate();
+			
+			 // 6_2) 트랜잭션 처리
+			if(result > 0) {
+				// > 커밋
+				
+				conn.commit();
+			
+			} else {
+				// > 롤백
+				
+				conn.rollback();
+			}
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			
+			try {
+				
+				// 7) 다 쓴 JDBC 용 자원 반납 (역순)
+				pstmt.close();
+				conn.close();
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		// 8) Controller 로 결과 반환
+		return result; // 성공 시 1, 실패 시 0
+	} // deleteMember 끝
+	
+} // 클래스 영역 끝

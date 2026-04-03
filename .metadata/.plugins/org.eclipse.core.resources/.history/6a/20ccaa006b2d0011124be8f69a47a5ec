@@ -1,0 +1,190 @@
+package com.kh.member.controller;
+
+import java.util.ArrayList;
+
+import com.kh.member.model.service.MemberService;
+import com.kh.member.model.vo.Member;
+import com.kh.member.view.MemberView;
+
+/**
+ * 
+ */
+public class MemberController { // 클래스 영역 시작
+
+	
+	/**
+	 * 회원 추가 요청 처리용 메소드
+	 * @param userId
+	 * @param userPwd
+	 * @param userName
+	 * @param gender
+	 * @param age
+	 * @param email
+	 * @param phone
+	 * @param address => 추가할 회원의 정보들
+	 */
+	public void insertMember(String userId, String userPwd, String userName,
+							 String gender, int age, String email, String phone,
+							 String address) {
+		
+		// 1) 요청 시 전달값들을 하나의 VO 로 가공하기
+		Member m = new Member(userId, userPwd, userName, gender,
+							  age, email, phone, address);
+		
+		// 2) Service 로 전달값을 넘기면서 메소드 호출 후 결과 받기
+		int result = new MemberService().insertMember(m);
+				
+		// 3) 결과에 따란 응답화면 지정
+		if(result > 0) {
+			// > 성공 화면
+			
+			new MemberView().displaySuccess("회원 추가 성공");
+			
+		} else {
+			// > 실패 화면
+			
+			new MemberView().displayFail("회원 추가 실패");
+		}
+		
+	} // insertMember 끝
+	
+	/**
+	 * 회원 전체 조회 요청 처리용 메소드
+	 */
+	public void selectAll() {
+		
+		// 1) 요청 시 전달값들을 하나의 VO 로 가공하기
+		// > 요청 시 전달값이 없으므로 패스
+		
+		// 2) Service 로 전달값을 넘기면서 메소드 호출 후 결과 받기
+		ArrayList<Member> list = new MemberService().selectAll();
+		// > 회원 "전체" 조회 기능은 "여러행 조회" 임!! (ArrayList)
+		
+		// 3) 결과에 따른 응답화면 처리
+		if(list.isEmpty()) {
+			// > 조회 결과가 없음 경우
+			
+			new MemberView().displayNodata("전체 조회 결과가 없습니다.");
+			
+		} else {
+			// > 조회 결과가 있을 경우
+			
+			new MemberView().displayList(list);
+		}
+		
+	} // selectAll 끝
+
+	/**
+	 * 회원 아이디로 검색 요청을 받아서 처리해주는 메소드
+	 * @param userId => 검색할 회원의 아이디 (검색어)
+	 */
+	public void selectByUserId(String userId) {
+		
+		// 1) 요청 시 전달값들을 하나의 VO 로 가공하기
+		// > 전달값이 한개이므로 패스
+		
+		// 2) Service 로 전달값을 넘기면서 메소드 호출 후 결과 받기
+		Member m = new MemberService().selectByUserId(userId);
+		// > unique 제약조건에 의해 "단일행 조회" 임!!
+		
+		// 3) 결과에 따른 응답화면 지정
+		if(m == null) {
+			// > 검색 결과가 없을 경우
+			
+			new MemberView().displayNodata(userId + " 에 해당하는 검색 결과가 없습니다.");
+		} else {
+			// > 검색 결과가 있을 경우
+			
+			new MemberView().displayOne(m);
+		}
+		
+	} // selectByUserId 끝
+	
+	/**
+	 * 회원 이름 검색 요청 처리용 메소드
+	 * @param keyword
+	 */
+	public void selectByUserName(String keyword) {
+		
+		// 1) 요청 시 전달값들을 하나의 VO 로 가공하기
+		// > 요청 시 전달값이 한개이므로 패스
+		
+		// 2) Service 로 전달값을 넘기면서 메소드 호출 후 결과 받기
+		ArrayList<Member> list = new MemberService().selectByUserName(keyword);
+		// > 키워드 검색은 포함되면 무조건 검색이기 때문에 "여러행 조회"
+		
+		// 3) 결과에 따른 응답화면 지정
+		if(list.isEmpty()) {
+			// 조회된 결과가 없을 경우
+			
+			new MemberView().displayNodata(keyword + "의 조회 결과가 없습니다");
+		
+		} else {
+			// 조회된 결과가 있을 경우
+			
+			new MemberView().displayList(list);
+		}
+		
+	} // selectByUserName 끝
+
+	/**
+	 * 회원 정보 수정 요청을 받아서 처리해주는
+	 * @param userId => 변경될 정보들
+	 * @param newPwd
+	 * @param newEmail
+	 * @param newPhone
+	 * @param newAddress
+	 */
+	public void updateMember(String userId, String newPwd, String newEmail,
+							 String newPhone, String newAddress) {
+		
+		// 1) 요청 시 전달값들을 하나의 VO 로 가공
+		Member m = new Member();
+		m.setUserId(userId);
+		m.setUserPwd(newPwd);
+		m.setEmail(newEmail);
+		m.setPhone(newPhone);
+		m.setAddress(newAddress);
+		
+		// 2) Service 로 전달값을 넘기면서 호출 후 결과 받기
+		int result = new MemberService().updateMember(m);
+		
+		// 3) 결과에 따른 응답화면 지정
+		if(result > 0) {
+			// > 성공 화면
+			
+			new MemberView().displaySuccess("회원 정보 변경 성공");
+		
+		} else {
+			// > 실패 화면
+			
+			new MemberView().displayFail("회원 정보 변경 실패");
+		}
+	} // updateMember 끝
+	
+	/**
+	 * @param userId
+	 */
+	public void deleteMember(String userId) {
+		
+		// 1) 요청 시 전달값들을 하나의 VO 로 가공
+		// > 전달값이 한개이므로 패스
+		
+		// 2) Service 로 전달값을 넘기면서 메소드 호출 후 결과 받기
+		int result = new MemberService().deleteMember(userId);
+		
+		// 3) 결과에 따른 응답화면 지정
+		if(result > 0) {
+			// > 성공 화면
+			
+			new MemberView().displaySuccess("회원 탈퇴 성공");
+		
+		} else {
+			// > 실패 화면
+			
+			new MemberView().displayFail("회원 탈퇴 실패");
+		}
+		
+	}  // deleteMember 끝
+	
+} // 클래스 영역 끝

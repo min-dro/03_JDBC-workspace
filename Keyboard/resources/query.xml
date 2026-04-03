@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+
+	<entry key="insertKeyboard">
+		INSERT INTO KEYBOARD VALUES(SEQ_KEYBOARD_NO.NEXTVAL
+								, ?
+								, ?
+								, ?
+								, ?
+								, ?
+								, ?
+								, ?)
+	</entry>
+
+	<entry key="selectAll">
+		SELECT * 
+		  FROM KEYBOARD
+		 ORDER BY KEYBOARD_NO ASC
+	</entry>
+
+	<entry key="selectByModelName">
+		SELECT *
+		  FROM KEYBOARD
+		 WHERE MODEL_NAME LIKE ?
+		 ORDER BY KEYBOARD_NO ASC
+	</entry>
+	
+	<entry key="updateKeyboard">
+		UPDATE KEYBOARD
+		   SET BRAND = ?
+		     , KEY_COUNT = ?
+		     , SWITCH_TYPE = ?
+		     , CONNECTION = ?
+		     , PRICE = ?
+		 WHERE MODEL_NAME = ?
+	</entry>
+	
+	<entry key="deleteKeyboard">
+		DELETE
+		  FROM KEYBOARD
+		 WHERE MODEL_NAME = ?
+	</entry>
+
+</properties>
+
+
+
+
+
+
+

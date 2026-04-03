@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 
+	* 이번에는 mapper 형식의 파일을 작성 (!DOCTYPE mapper)
+	
+	* mapper 의 namespace 속성
+	
+	- 	
+-->
+ 
+<mapper namespace="">
+
+</mapper>

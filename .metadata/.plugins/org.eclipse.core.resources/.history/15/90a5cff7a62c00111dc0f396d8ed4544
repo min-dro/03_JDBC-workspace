@@ -1,0 +1,23 @@
+package com.kh.member.controller;
+
+public class MemberController { // 클래스 영역 시작
+
+	
+	/**
+	 * 회원 추가용 메소드
+	 * @param userId
+	 * @param userPwd
+	 * @param userName
+	 * @param gender
+	 * @param age
+	 * @param email
+	 * @param phone
+	 * @param address => 추가할 회원의 정보들
+	 */
+	public void insertMamber(String userId, String userPwd, String userName,
+							 String gender, int age, String email, String phone,
+							 String address) {
+		
+	}
+	
+} // 클래스 영역 끝

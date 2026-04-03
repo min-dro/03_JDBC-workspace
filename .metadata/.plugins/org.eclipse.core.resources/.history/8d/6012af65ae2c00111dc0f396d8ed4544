@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	* 이번에는 mapper 형식의 파일을 작성 (!DOCTYPE mapper)
+	
+	- SQL 문을 보관하는 파일을 mapper 파일이라고 함!!
+	
+	* mapper 의 namespace 속성
+	
+	- 이 mapper 파일의 고유한 별칭을 부여하는 속성 (반드시 작성)
+	- 반드시 namespace 속성을 적어두고 나서 mapper 파일의 경로를 등록해야함 (mybatis-config.xml)
+-->
+ 
+<mapper namespace="mmeberMapper">
+
+</mapper>

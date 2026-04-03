@@ -1,0 +1,132 @@
+package com.kh.member.common;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+/*
+ * * JDBCTemplate 클래스
+ * 
+ *  - JDBC 과정 중 반복적으로 쓰이는 구문들을 각각의 메소드 단위로 정의해둘 곳
+ *  - 해당 과정이 필요할 때 마다 알맞은 메소드를 계속 호출해서 사용할 것!!
+ *  - 자주 쓰이는 코드들을 "재사용할 목적" 으로 공통 탬플릿 (공통 코드) 작업을 진행해보자
+ *  
+ * => "재사용", "공유" 의 개념이 강한 공통 코드를 작성
+ *    이 클래스에서의 모든 메소드들을 죄다 static 메소드로 작성해보자!!
+ *    (싱글톤 패턴 적용)
+ *    
+ * static : 프로그램 시작 시 메모리의 Static 영역에 한번에 올라가고, 프로그램이 종료되기 전까지 언제든지 꺼내 쓸 수 있음
+ * 싱글톤 패턴 : 메모리 영역에 단 한번 올라간 것을 계속 가져다 쓰는 (재사용하는) 개념
+ * 
+ * * JDBC 과정에서 공통적으로 필요한 코드들
+ * 1) Connection 객체를 생성하고 트랜잭션 설정을 하는 코드 (자동 커밋 해제)
+ * 2) JDBC 용 자원 (객체) 을 반납하는 코드
+ * 3) Connection 객체를 가지고 트랜잭션 처리를 해주는 코드
+ */
+public class JDBCTemplate { // 클래스 영역 시작
+
+	// 1) Connection 객체를 생성하고 트랜잭션 설정 후 그 Connection 객체를 반환해주는 메소드
+	public static Connection getConnection() {
+		
+		// 변수 선언 및 null 로 초기화
+		Connection conn = null;
+		
+		try {
+			
+			// Connection 객체를 생성하려면 JDBC Driver 등록부터 해줘야 한다!!
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			
+			// 본격적으로 Connection 객체 생성하기
+			conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "JDBC", "JDBC");
+			
+			// 트랜잭션 관련 설정하기 (자동 커밋 해제_
+			conn.setAutoCommit(false);
+			// > select 문일 경우 설정해도 상관 없음!! 깔끔하게 공통 코드로 묶자!!
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		// 이렇게 만들고 셋팅된 Connection 을 반환 (호출한 쪽에서 가져다 쓸 수 있도록)
+		return conn;
+		
+	} // getConnection() 끝
+	
+	// 2) 매개변수로 전달받은 JDBC 자원을 반납하는 메소드
+	// 2_1) Connection 객체를 전달받아서 반납시켜주는 메소드
+	public static void close(Connection conn) {
+	
+		try {
+	
+			if((conn != null) && (!conn.isClosed())) {
+				// > 전달된 conn 이 null 이 아니고 그리고
+				//   전달된 conn 이 close 된 상태가 "아니 (!)" 라면
+				
+				conn.close();
+				// > 이 경우에만 close 시키겠다 (반납시키겠다) 
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	} // close 끝
+	
+	// 2_2) Statement 객체를 전달받아서 반납시켜주는 메소드
+	// > 메소드명이 같으나 매개변수의 자료형이 다르기 때문에 "오버로딩" 이 적용된 메소드
+	// > 또한 Statement 가 PreparedStatement 의 부모이기 때문에 "다형성" 에 의해 부모타입 메소드만 한번 정의해두면 한번 정의해두면 잘 돌아감
+	//   (만약 호출 시 자식 타입을 전달한다면, 그 자식타입의 "오버라이딩" 돈 메소드가 알아서 호출이 될 것임!!
+	public static void close(Statement stmt) {
+		
+		try {
+		
+			if((stmt != null) && (!stmt.isClosed())) {
+				
+				stmt.close();
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	} // close 끝
+	
+	// 2_3) ResultSet 객체를 전달받아서 반납시켜주는 메소드
+	public static void close(ResultSet rset) {
+		
+		try {
+			
+			if((rset != null) && (!rset.isClosed())) {
+				
+				rset.close();
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	} // close 끝
+	
+	// 3) Connection 객체를 받아서 트랜잭션 처리를 해주는 메소드
+	// 3_1) 전달받은 Connection 객체를 가지고 COMMIT 시켜주는 메소드
+	public static void commit(Connection conn) {
+		
+		try {
+			
+			if((conn != null) && (!conn.isClosed())) {
+				
+				conn.commit();
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+	}
+} // 클래스 영역 끝

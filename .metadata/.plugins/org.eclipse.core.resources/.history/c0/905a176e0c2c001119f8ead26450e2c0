@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- xml 파일임을 알려줌 -->
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 
+    * !DOCTYPE configuration
+    
+    - 이 xml 문서의 형식이 configuration (== 환경설정) 임을 알려주는 부분
+	- 이 문서의 시작태그와 종료태그가 configuration 태그여야만 함!!    
+
+	* DTD
+	
+	- 이 문서의 유효성을 검사해주는 부분 (즉, 문법 체크를 해주는 부분)
+	- configuration 하위 태그들 내용 중 잘못된 태그가 있는지,
+	  테그 안의 속성 중에 누락된 속성들이 있는지 등을 검사해줌 (빨간 밑줄로 알려줌)
+-->
+<configuration>
+   
+   <!-- 
+   	    * settings
+   	    
+   	    - 마이바티스 구동 시 필요한 설정값들을 제시하는 영역
+   	    - setting 이라는 단수형 태그를 안쪽에 작성하여 설정값들을 작성하되,
+   	      name 속성에는 설정명, value 속성에는 설정값을 작성함!! (개발자문서 참고)
+    -->
+   <settings>
+   		<setting name="jdbcTypeForNull" value="NULL" />
+   		<!-- 
+   			- jdbcTypeForNull : NULL 로 셋팅함
+   			  만약, insert 또는 update 시 빈 데이터가 전달되었다면
+   			  실제 테이블에 데이터가 들어갈 때 빈칸이 아닌 NULL 로 인식해서 넣어주겠다.
+   			  (무조건 대문자 NULL 로 셋팅해야함)
+   		 -->
+   </settings> 
+   
+   <!-- 
+   	    * typeAliases
+   	    
+   	    - VO (DTO) 클래스들의 풀 클래스명을 단순한 클래스명처럼 짧게 줄여서 사용하기 위해 별칭을 등록하는 영역
+   	      (마이바티스에서는 클래스명을 작성할 때 "풀 클래스명" 으로 작성해야함!!)
+   	    - 단, VO (DTO) 가 반드시 만들어진 후에 설정을 해줘야함
+   -->
+    <typeAliases>
+    	<typeAlias alias="Member" type="com.kh.mybatis.member.model.vo.Member" />
+    </typeAliases>
+	
+</configuration>
+  

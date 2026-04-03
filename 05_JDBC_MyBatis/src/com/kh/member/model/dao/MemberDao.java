@@ -1,0 +1,123 @@
+package com.kh.member.model.dao;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.ibatis.session.SqlSession;
+
+import com.kh.member.model.vo.Member;
+
+/*
+ * * 기존 JDBC 흐름
+ * 1) 필요한 변수들 먼저 셋팅 + 쿼리문도 같이 셋팅
+ * 2) PreparedStatement 객체 생성
+ * 3) 미완성된 쿼리문 완성시키기
+ * 4) 쿼리문 실행 후 결과 받기
+ * 5) select 문의 경우 ResultSet 에 담긴 결과를 VO 로 옮겨 담기
+ * 6) 다 쓴 JDBC 용 자원 반납 (역순)
+ * 7) Service 로 결과 리턴
+ * 
+ * * 마이바티스에서는 SqlSession 객체에서 제공하는 메소드들을 통해서
+ *   곧바로 SQL 문을 찾아서 실행하고 결과 또한 바로 받아볼 수 있다!!
+ *   
+ * [ 표현법 ]
+ * 
+ * sqlSession.sql문종류에맞는메소드("어느xml파일의.어느키값을가진sql문", 미완성된sql문을완성시킬데이터);
+ * 
+ * - 단, 미완성된sql문을완성시킬데이터 는 완성된 SQL 문일 경우 매개변수를 생략 가능하다!!
+ * 
+ * sql문종류에맞는메소드
+ * - insert 문 : insert 메소드
+ * - update 문 : update 메소드
+ * - delete 문 : delete 메소드 - int (처리된 행의 갯수)
+ * - select 문 : 단일행 조회 selectOne 메소드 - 해당 VO 타입
+ *  			여러행 조회 selectList 메소드 - 해당 VO 타입들이 담겨있는 List
+ */
+public class MemberDao { // 클래스 영역 시작
+
+	/**
+	 * 회원 추가용 큐리문 실행 메소드
+	 * @param sqlSession => 쿼리문 실행 용도의 마이바티스 객체
+	 * @param m => 추가할 회원의 정보들
+	 * @return => insert 된 행의 갯수
+	 */
+	public int insertMember(SqlSession sqlSession, Member m) {
+		
+		// INSERT 구문 : insert 메소드
+		// int result = sqlSession.insert("memberMapper.insertMember", m);
+		// return result;
+		
+		return sqlSession.insert("memberMapper.insertMember", m);
+		
+	} // insertMember 끝
+
+	/**
+	 * 회원 전체 조회용 쿼리문 실행 메소드
+	 * @param sqlSession => 쿼리문 실행 시 필요한 마이바티스용 객체
+	 * @return => 조회된 회원들의 목록
+	 */
+	public ArrayList<Member> selectAll(SqlSession sqlSession) {
+
+		// SELECT 문 : 여러행 조회이므로 selectList 메소드를 호출
+		// List<Object> list = sqlSession.selectList("memberMapper.selectAll");
+		// return (ArrayList)list;
+		
+		return (ArrayList)sqlSession.selectList("memberMapper.selectAll");
+		
+	} // selectAll 끝
+
+	/**
+	 * 회원 아이디 검색용 쿼리문을 실행해주는 메소드
+	 * @param sqlSession => 쿼리문 실행 시 필요한 마이바티스용 객체
+	 * @param userId => 검색할 회원의 아이디
+	 * @return => 검색된 회원 한명의 정보
+	 */
+	public Member selectByUserId(SqlSession sqlSession, String userId) {
+		
+		// SELECT 문 : 단일행 조회 이므로 selectOne 메소드
+		return sqlSession.selectOne("memberMapper.selectByUserId", userId);
+		// > selectOne 은 조회 결과가 있으면 해당 VO 타입으로,
+		//   조회 결과가 없으면 null 을 리턴
+		
+	} // selectByUserId 끝
+
+	/**
+	 * 회원 이름 검색용 쿼리문을 실행해주는 메소드
+	 * @param sqlSession => 쿼리문 실행 시 필요한 마이바티스용 객체
+	 * @param keyword => 검색할 회원의 이름 키워드 (검색어)
+	 * @return => 검색된 회원들의 목록
+	 */
+	public ArrayList<Member> selectByUserName(SqlSession sqlSession, String keyword) {
+		
+		// SELECT 문 : selectList 메소드
+		return (ArrayList)sqlSession.selectList("memberMapper.selectByUserName", keyword);
+	
+	} // selectByUserName 끝
+
+	/**
+	 * 회원 정보 수정용 쿼리문을 실행해주는 메소드
+	 * @param sqlSession => 쿼리문 실행용 객체
+	 * @param m => 변경할 회원의 정보들
+	 * @return => update 된 행의 갯수
+	 */
+	public int updateMember(SqlSession sqlSession, Member m) {
+		
+		// UPDATE 구문 : update 메소드
+		return sqlSession.update("memberMapper.updateMember", m);
+	
+	} // updateMember 끝
+
+	/**
+	 * 회원 탈퇴용 쿼리문을 실행시켜주는 메소드
+	 * @param sqlSession => 쿼리문 실행용 객체
+	 * @param userId => 탈퇴시킬 회원의 아이디
+	 * @return => delete 된 행의 갯수
+	 */
+	public int deleteMember(SqlSession sqlSession, String userId) {
+	
+		// DELETE 문 : delete 메소드
+		return sqlSession.delete("memberMapper.deleteMember", userId);
+	
+	} // deleteMember 끝
+
+} // 클래스 영역 끝

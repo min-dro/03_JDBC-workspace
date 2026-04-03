@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- xml 파일임을 알려줌 -->
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 
+    * !DOCTYPE configuration
+    
+    - 이 xml 문서의 형식이 configuration (== 환경설정) 임을 알려주는 부분
+	- 이 문서의 시작태그와 종료태그가 configuration 태그여야만 함!!    
+
+	* DTD
+	
+	- 이 문서의 유효성을 검사해주는 부분 (즉, 문법 체크를 해주는 부분)
+	- configuration 하위 태그들 내용 중 잘못된 태그가 있는지,
+	  테그 안의 속성 중에 누락된 속성들이 있는지 등을 검사해줌 (빨간 밑줄로 알려줌)
+-->
+<configuration>
+    
+	
+	
+</configuration>
+  

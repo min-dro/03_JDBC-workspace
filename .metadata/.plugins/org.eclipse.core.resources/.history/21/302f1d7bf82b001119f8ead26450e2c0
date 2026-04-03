@@ -1,0 +1,193 @@
+package com.kh.model.dao;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Properties;
+
+import com.kh.common.JDBCTemplate;
+import com.kh.model.vo.Keyboard;
+
+public class KeyboardDao {
+	
+	private Properties prop = new Properties();
+	
+	public KeyboardDao() { 
+		try {
+			prop.load(new FileInputStream("resources/query.xml"));
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public int insertKeyboard(Connection conn, Keyboard k) {
+		
+		String sql = prop.getProperty("insertKeyboard");
+
+		int result = 0;
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, k.getBrand());
+			pstmt.setString(2, k.getModelName());
+			pstmt.setInt(3, k.getKeyCount());
+			pstmt.setString(4, k.getSwitchType());
+			pstmt.setString(5, k.getConnection());
+			pstmt.setInt(6, k.getPrice());
+			pstmt.setString(7, k.getRgb());
+			
+			result = pstmt.executeUpdate();
+			
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			
+			JDBCTemplate.close(pstmt);
+		}
+		
+		return result;
+		
+	} // insertKeyboard 끝
+	
+	public ArrayList<Keyboard> selectAll(Connection conn) {
+		
+		String sql = prop.getProperty("selectAll");
+		
+		ArrayList<Keyboard> list = new ArrayList<>();
+		
+		PreparedStatement pstmt = null;
+		ResultSet rset = null;
+		
+		try{
+			
+			pstmt = conn.prepareStatement(sql);
+			
+			rset = pstmt.executeQuery();
+			
+			while(rset.next()) {
+				Keyboard k = new Keyboard();
+				
+				k.setKeyboardNo(rset.getInt("KEYBOARD_NO"));
+				k.setBrand(rset.getString("BRAND"));
+				k.setModelName(rset.getString("MODEL_NAME"));
+				k.setKeyCount(rset.getInt("KEY_COUNT"));
+				k.setSwitchType(rset.getString("SWITCH_TYPE"));
+				k.setConnection(rset.getString("CONNECTION"));
+				k.setPrice(rset.getInt("PRICE"));
+				k.setRgb(rset.getString("RGB"));
+				
+				list.add(k);
+			}
+			
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBCTemplate.close(rset);
+			JDBCTemplate.close(pstmt);
+		}
+		
+		return list;
+	}
+
+	public ArrayList<Keyboard> selectByModelName(Connection conn, String keyword) {
+		
+		String sql = prop.getProperty("selectByModelName");
+		
+		ArrayList<Keyboard> list = new ArrayList<>();
+		
+		PreparedStatement pstmt = null;
+		ResultSet rset = null;
+		
+		try {
+			
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, "%"+keyword+"%");
+			
+			rset = pstmt.executeQuery();
+			
+			while(rset.next()) {
+				Keyboard k = new Keyboard();
+				
+				k.setKeyboardNo(rset.getInt("KEYBOARD_NO"));
+				k.setBrand(rset.getString("BRAND"));
+				k.setModelName(rset.getString("MODEL_NAME"));
+				k.setKeyCount(rset.getInt("KEY_COUNT"));
+				k.setSwitchType(rset.getString("SWITCH_TYPE"));
+				k.setConnection(rset.getString("CONNECTION"));
+				k.setPrice(rset.getInt("PRICE"));
+				k.setRgb(rset.getString("RGB"));
+				
+				list.add(k);
+			}
+			
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JDBCTemplate.close(rset);
+			JDBCTemplate.close(pstmt);
+		}
+		
+		return list;
+	}
+
+	public int updateKeyboard(Connection conn, Keyboard k) {
+		
+		String sql = prop.getProperty("updateKeyboard");
+		
+		int result = 0;
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			
+			pstmt.setString(1, k.getBrand());
+			pstmt.setInt(2, k.getKeyCount());
+			pstmt.setString(3, k.getSwitchType());
+			pstmt.setString(4, k.getConnection());
+			pstmt.setInt(5, k.getPrice());
+			pstmt.setString(6, k.getModelName());
+			
+			result = pstmt.executeUpdate();
+			
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			
+			JDBCTemplate.close(pstmt);
+		}
+		
+		return result;
+	}
+
+	public int deleteKeyboard(Connection conn, String modelName) {
+		
+		String sql = prop.getProperty("deleteKeyboard");
+		
+		int result = 0;
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, modelName);
+			
+			result = pstmt.executeUpdate();
+			
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			
+			JDBCTemplate.close(pstmt);
+		}
+		
+		return result;
+	}
+	
+}

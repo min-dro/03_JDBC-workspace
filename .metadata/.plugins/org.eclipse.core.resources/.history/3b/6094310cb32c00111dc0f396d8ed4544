@@ -1,0 +1,156 @@
+package com.kh.member.view;
+
+import java.util.Scanner;
+
+import com.kh.member.controller.MemberController;
+
+public class MemberView { // 클래스 영역 시작
+	
+	private Scanner sc = new Scanner(System.in);
+	
+	private MemberController mc = new MemberController();
+	
+	/**
+	 * 사용자가 보게 될 첫 화면 (메인화면)
+	 */
+	public void mainMenu() {
+		
+		while(true) {
+			
+			System.out.println("\n***** 회원 관리 프로그램 *****");
+			
+			System.out.println("1. 회원 추가");
+			System.out.println("2. 회원 전체 조회");
+			System.out.println("3. 회원 아이디로 검색");
+			System.out.println("4. 회원 이름 키워드 검색");
+			System.out.println("5. 회원 정보 변경");
+			System.out.println("6. 회원 탈퇴");
+			System.out.println("0. 프로그램 종료");
+			
+			System.out.println("--------------------------");
+			
+			System.out.print("이용할 메뉴 선택 : ");
+			int menu = sc.nextInt();
+			sc.nextLine();
+			
+			switch(menu) {
+			case 1 : 
+				insertMember();
+				break;
+			case 2 : 
+				break;
+			case 3 : 
+				break;
+			case 4 : 
+				break;
+			case 5 : 
+				break;
+			case 6 : 
+				break;
+			case 0 : 
+				System.out.println("프로그램을 종료합니다.");
+				return;
+			default : 
+				System.out.println("번호를 잘못 입력했습니다. 다시 입력해 주세요.");
+			}
+		}
+		
+	} // mainMenu  메소드 끝
+	
+	/**
+	 * 회원 추가용 화면
+	 */
+	public void insertMember() {
+		
+		System.out.println("\n--- 회원 추가 ---");
+		
+		// 아이디, 비번, 이름, 성별, 나이, 이메일, 전화번호 주소
+		System.out.print("* 아이디 : ");
+		String userId = sc.nextLine();
+		
+		System.out.print("* 비밀번호 : ");
+		String userPwd = sc.nextLine();
+		
+		System.out.print("* 이름 : ");
+		String userName = sc.nextLine();
+		
+		System.out.print("성별 (M/F) : ");
+		String gender = sc.nextLine().toUpperCase();
+		
+		System.out.print("나이 : ");
+		int age = sc.nextInt();
+		sc.nextLine();
+		
+		System.out.print("이메일");
+		String email = sc.nextLine();
+		
+		System.out.print("전화번호 (숫자만) : ");
+		String phone = sc.nextLine();
+		
+		System.out.print("주소 : ");
+		String address = sc.nextLine();
+		
+		
+		// Controller 의 어떤 메소드를 호출하면서 회원 추가 요청
+		mc.insertMember(userId, userPwd, userName, gender,
+						age, email, phone, address);
+		
+	} // insertMember 끝
+	
+	// -----------------------------------------
+		// 응답 시 보여줄 화면들
+		
+		/**
+		 * 요청 성공 시 보여질 화면
+		 * @param message => 성공메세지 문구
+		 */
+		public void displaySuccess(String message) {
+			
+			System.out.println("서비스 요청 성공 : " + message);
+		}
+		
+		/**
+		 * 요청 실패 시 보여질 화면
+		 * @param message => 실패메세지 문구
+		 */
+		public void displayFail(String message) {
+			
+			System.out.println("서비스 요청 실패 : " + message);
+		}
+		
+		/**
+		 * 조회 서비스 요청 시 조회 결과가 없을 경우 보여질 화면
+		 * @param message => 메세지 내용
+		 */
+		public void displayNodata(String message) {
+			
+			System.out.println(message);
+		}
+		
+		/**
+		 * 조회 서비스 요청 시 여러 행이 조회된 결과를 받아서 보여줄 화면
+		 * @param list => 여러 행이 조회된 결과
+		 */
+		public void displayList(ArrayList<Member> list) {
+			
+			System.out.printf("조회된 데이터는 다음과 같습니다. (총 %d건)\n", list.size());
+			
+			for(int i = 0; i < list.size(); i++) {
+				
+				System.out.println(list.get(i));
+			}
+		}
+		
+		/**
+		 * 조회 서비스 요청 시 단일행 조회 결과가 보여질 화면
+		 * @param m => 조회된 한명의 회원의 정보
+		 */
+		public void displayOne(Member m) {
+			
+			System.out.println("조회된 데이터는 다음과 같습니다. (총 1건)");
+			
+			System.out.println(m);
+			
+		}
+	
+} // 클래스 영역 끝

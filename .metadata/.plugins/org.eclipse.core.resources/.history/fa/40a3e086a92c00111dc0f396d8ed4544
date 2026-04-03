@@ -1,0 +1,5 @@
+package com.kh.member.model.dao;
+
+public class MemberDao { // 클래스 영역 시작
+
+} // 클래스 영역 끝

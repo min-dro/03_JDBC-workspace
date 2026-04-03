@@ -1,0 +1,58 @@
+package com.kh.member.model.service;
+
+import org.apache.ibatis.session.SqlSession;
+
+import com.kh.member.common.Template;
+import com.kh.member.model.dao.MemberDao;
+import com.kh.member.model.vo.Member;
+/*
+ * * 기존 JDBC 흐음
+ * 1) Connection 객체 생성
+ * 2) Connection 객체와 전달값을 DAO 로 넘기면서 메소드 호출 후 결과 받기
+ * 3) DML 문의 경우 트랜잭션 처리
+ * 4) Connection 객체 반납
+ * 5) Controller 로 결과 리턴
+ * 
+ * * 마이바티스 흐름
+ * 1) SqlSession 객체 생성 (기존의 Connection + PreparedStatement 역할)
+ * 2) SqlSession 객체와 전달값을 넘기면서 DAO 로 요청 후 결과 받기
+ * 3) DML 문의 경우 트랜잭션 처리
+ * 4) SqlSession 객체 반납
+ * 5) Controller 로 결과 리턴
+ */
+public class MemberService { // 클래스 영역 시작
+
+	/**
+	 * 회원 추가용 서비스
+	 * @param m => 추가할 회원의 정보
+	 * @return => 처리된 행의 갯수
+	 */
+	public int insertMember(Member m) {
+		
+		// 1) SqlSession 객체 생성
+		SqlSession sqlSession = Template.getSqlSession();
+		
+		// 2) SqlSession 객체와 전달값을 넘기면서 DAO 로 요청 후 결과 받기
+		int result = new MemberDao().insertMember(sqlSession, m);
+		
+		// 3) DML 문의 경우 트랜잭션 처리
+		if(result > 0) {
+			// > 성공 (커밋)
+		
+			sqlSession.commit();
+		
+		} else {
+			// > 실패 (롤백)
+			
+			sqlSession.rollback();
+		}
+		
+		// 4) SqlSession 객체 반납
+		sqlSession.close();
+		
+		// 5) Controller 로 결과 리턴
+		return result;
+		
+	} // insertMember 끝
+	
+} // 클래스 영역 끝

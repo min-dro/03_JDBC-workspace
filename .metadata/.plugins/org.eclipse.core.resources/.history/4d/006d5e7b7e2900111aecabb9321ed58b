@@ -1,0 +1,19 @@
+package com.kh.member.model.service;
+
+/*
+ * * Service 단
+ * 
+ * - JDBC 과정에서 필요한 Connection 객체와 관련된 모든 구문들을 작성하는 부분
+ *   (Connection 객체 생성 구문, Connection 객체를 통해 트랜잭션 처리 해주는 구문, Connection 객체 반납 구문)
+ * - 즉, 하나의 트랜잭션 단위를 나타내는 부분이라고 보면 된다!!
+ * 
+ * 참고)
+ * 옛날에는 Controller 에서 모든 코드를 다 썼었음!!
+ * Controller 에서 코드를 다 짜기에는 너무 길어서 DAO 로 입출력과정 코드만 옮겨둠 (쪼개둠)
+ * 그것마저도 DAO 가 너무 기니까 Service 로 트랜잭션 단위의 코드만 또 옮겨둔것!!
+ * => low controller fat service
+ * 
+ */
+public class MemberService { // 클래스 영역 시작
+
+} // 클래스 영역 끝

@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Copy Project &apos;02_JDBC_PreparedStatement&apos;" description="Copy Project &apos;02_JDBC_PreparedStatement&apos;" destination="C:/03_JDBC-workspace" element="/02_JDBC_PreparedStatement" flags="7" id="org.eclipse.ltk.core.refactoring.copyproject.resource" name="03_JDBC_Template_Service" stamp="1774571201553"/>&#x0A;<refactoring comment="Copy Project &apos;03_JDBC_Template_Service&apos;" description="Copy Project &apos;03_JDBC_Template_Service&apos;" destination="C:/03_JDBC-workspace" element="/03_JDBC_Template_Service" flags="7" id="org.eclipse.ltk.core.refactoring.copyproject.resource" name="04_JDBC_ Properties" stamp="1774582599230"/>
+</session>

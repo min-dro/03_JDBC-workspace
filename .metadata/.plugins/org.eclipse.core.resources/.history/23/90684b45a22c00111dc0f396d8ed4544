@@ -1,0 +1,67 @@
+package com.kh.member.common;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+
+// 서비스가 호출될 때 마다
+// 마이바티스용 객체인 SqlSession 객체를 생성해서 리턴해주는 메소드를 작성할 곳
+// > 기존의 JDBCTemplate 과 유사한 역할
+public class Template { // 클래스 영역 시작
+
+	/*
+	 * * 기존 JDBC 과정	<-->   MyBatis 과정
+	 * 1. getConnection 	   getSqlSession
+	 * 2. close
+	 * 3. commit
+	 * 4. rollback
+	 * 
+	 * * 마이바티스의 SqlSession 객체
+	 * 
+	 * - 순수 JDBC 의 Connection + (Prepared)Statement 객체의 역할을 함!!
+	 * - 메인 역할로는 SQL 문을 실행해주는 역할이고, 추가적으로 트랜잭션 관련 메소드까지 다 포함되어있음!!
+	 */
+
+	// SqlSession 객체를 만들어서 리턴해주는 메소드
+	public static SqlSession getSqlSession() { // 메소드 영역 시작
+		
+		// mybatis-config.xml 파일로 부터 설정값을 읽어들임 (input)
+		// SqlSessionFactoryBuilder 객체 생성
+		// SqlSessionFactory 객체 생성
+		// SqlSession 객체 생성
+		// (개발자 문서에 이미 샘플 코드가 있음)
+		
+		SqlSession sqlSession = null;
+		
+		// 1. mybatis-config.xml 파일의 경로를 먼저 셋팅
+		String resource = "/mybatis-config.xml";
+		// > / 는 이 프로젝트 폴더 내에 바로 만들었었던 소스 폴더만 resources 폴더를 의미
+
+		try {
+
+			// 2. mybatis-config.xml 파일과 연결된 "입력용 스트림 객체" 를 얻어내기
+			// > InputStream 객체 이용
+			InputStream inputStream = Resources.getResourceAsStream(resource);
+		
+			// 3. SqlSessionFactoryBuilder 객체 생성
+			SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
+
+			// 4. SqlSessionFactory 객체 생성
+			SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBuilder.build(inputStream);
+			
+			// 5. SqlSession 객체 생성
+			sqlSession = sqlSessionFactory.openSession();
+			// > openSession 메소드는 오버로딩된 형태가 있다!!
+			// 
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return sqlSession;
+	} // 메소드 영역 끝
+	
+} // 클래스 영역 끝

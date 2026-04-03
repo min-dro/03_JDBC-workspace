@@ -1,0 +1,23 @@
+package com.kh.member.model.vo;
+
+import java.sql.Date;
+
+public class Member { // 클래스 영역 시작
+
+	// 필드부
+	private int userNo;			//	USERNO	NUMBER
+	private String userId; 		//	USERID	VARCHAR2(15 BYTE)
+	private String userPwd;		//	USERPWD	VARCHAR2(20 BYTE)
+	private String userName;	//	USERNAME	VARCHAR2(20 BYTE)
+	private String gender;		//	GENDER	CHAR(1 BYTE)
+	private int age;			//	AGE	NUMBER
+	private String email;		//	EMAIL	VARCHAR2(30 BYTE)
+	private String phone;		//	PHONE	CHAR(11 BYTE)
+	private String address;		//	ADDRESS	VARCHAR2(100 BYTE)
+	private Date enrollDate;	//	ENROLLDATE	DATE
+
+	// 생성자부
+	public Member() { }
+	
+	
+} // 클래스 영역 끝

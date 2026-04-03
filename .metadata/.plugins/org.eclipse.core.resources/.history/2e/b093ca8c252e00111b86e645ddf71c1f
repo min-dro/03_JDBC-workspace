@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	* 이번에는 mapper 형식의 파일을 작성 (!DOCTYPE mapper)
+	
+	- SQL 문을 보관하는 파일을 mapper 파일이라고 함!!
+	
+	* mapper 의 namespace 속성
+	
+	- 이 mapper 파일의 고유한 별칭을 부여하는 속성 (반드시 작성)
+	- 반드시 namespace 속성을 적어두고 나서 mapper 파일의 경로를 등록해야함 (mybatis-config.xml)
+-->
+<mapper namespace="memberMapper">
+	<!-- 
+		* resultMap
+		
+		- 마이바티스의 핵심 기능 중 하나
+		- SELECT 문 실행의 경우 ResultSet 으로부터 조회된 컬럼값을 하나씩 뽑아서
+		  내가 지정한 VO 객체의 각 필드로 넣어주는 (맵핑) 역할을 수행한다!!
+		 
+		- 즉, 기존의
+		while(rset.next()) {
+			
+			Member m = new Member();
+			m.setUserNo(rset.getInt("USERNO"));
+			m.setUserId(rset.getString("USERID"));
+			...
+			
+			list.add(m);
+		)
+		이 구문을 줄여주는 역할
+		
+		[ 표현법 ]
+		
+		<resultMap id="각resultMap의고유한id값"
+				   type="조회된결과를담아서반환하고자하는VO객체의타입(풀클래스명) 혹은 별칭">
+			<id column="PK컬럼명" property="그컬럼값을담을필드명" />
+			<result column="컬럼명" property="그컬럼값을담을필드명" />
+			<result column="컬럼명" property="그컬럼값을담을필드명" />
+			<result column="컬럼명" property="그컬럼값을담을필드명" />
+			...
+		</resultMap>
+		
+		> id 태그에는 PK 컬럼에 해당하는 맵핑 정보를 적는다.
+		> result 태그에는 일반 컬럼에 해당하는 맵핑 정보를 적는다. (PK 컬럼도 가능)
+		> resultMap 의 동작 원리라고 한다면
+		  type 에 적힌 VO 클래스의 "기본생성자" 로 객체가 내부적으로 생성이 되고,
+		  각 필드에 대응되는 "setter" 메소드가 내부적으로 호출되서 필드값이 채워지는 원리임!! (setter 주입)
+	-->
+	
+	<!-- MEMBER 테이블로부터 조회된 ResultSet 을 자바의 Member VO 로 데이터를 옮겨주는 ResultMap -->
+	<resultMap id="memberResultSet" type="com.kh.member.model.vo.Member">
+		<id column="USERNO" property="userNo" />
+		<result column="USERID" property="userId" />
+		<result column="USERPWD" property="userPwd" />
+		<result column="USERNAME" property="userName" />
+		<result column="GENDER" property="gender" />
+		<result column="AGE" property="age" />
+		<result column="EMAIL" property="email" />
+		<result column="PHONE" property="phone" />
+		<result column="ADDRESS" property="address" />
+		<result column="ENROLLDATE" property="enrollDate" />
+	</resultMap>
+	<!-- 
+		* mapper 파일에 SQL 문 담아두기
+		
+		- DML (INSERT, UPDATE, DELETE) 문의 경우
+		<insert id="각SQL문들의고유한키값"
+				parameterType="전달받을자바타입(풀클래스명) 혹은 별칭">
+			쿼리문
+		</insert>
+		
+		<update>쿼리문</update>
+		
+		<delete>쿼리문</delete>
+		
+		> parameterType 속성은 전달받을 값이 없다면 (즉, 쿼리문이 완성된 형태라면) 생략 가능하다.
+		> update, delete 태그도 마찬가지
+		
+		- SELECT 문의 경우
+		
+		<select id="각SQL문들의고유한키값" parameterType="전달받을자바타입(풀클래스명) 혹은 별칭"
+				resultType="조회결과를받아줄자바타입" 또는 
+				resultMap="조회결과를뽑아서맵핑할resultMap의id">
+			쿼리문
+		</select>
+		
+		> parameterType 속성은 전달받을 값이 없다면 (즉, 쿼리문이 완성된 형태라면) 생략 가능하다.
+		> 반드시 resultType(자바에서 기본적으로 제공하는 자료형일때) 또는
+		  resultMap(내가 만든 VO 타입일때) 으로 결과 ResultSet 에 대해 자바 타입으로 옮겨줘야함!!
+		
+		* 마이바티스의 mapper 파일 내에서 미완성된 쿼리문 완성시키기
+		
+		- 만약 미완성된 쿼리문을 완성시킬 데이터로 VO 객체가 넘어왔다면 # {필드명}, 으로 구명을 채울 수 있다.
+		- 만약 미완성된 쿼리문을 완성시킬 데이터로 일반 변수값 하나가 넘어왔다면 #{변수명} 으로 구멍을 채우면 된다.
+		- 만약 미완성된 쿼리문을 완성시킬 데이터로 HashMap 객체가 넘어온다면 #{키값}
+		
+		> #{} 는 PreparedStatement 임!!
+		  만약, 문자열 타입의 데이터가 들어온다고 한다면 알아서 양쪽에 '' (홑따옴표) 를 붙여서 구멍을 메꿔준다!!
+		> ${} 로도 구멍을 채울 수 있긴 함
+		  ${} 는 Statement 임!!
+		  만약, 문자열타입의 데이터가 들어오면 '' 없이 구멍을 매꿔준다!!
+	-->
+	
+	<!-- 회원 추가용 쿼리문 -->
+	<insert id="insertMember" parameterType="com.kh.member.model.vo.Member">
+		INSERT INTO MEMBER VALUES(SEQ_USERNO.NEXTVAL
+								, #{userId}
+								, #{userPwd}
+								, #{userName}
+								, #{gender}
+								, #{age}
+								, #{email}
+								, #{phone}
+								, #{address}
+								, DEFAULT)
+	</insert>
+	
+	<!-- 회원 전체 조회용 쿼리문 -->
+	<select id="selectAll" resultMap="memberResultSet">
+		SELECT *
+		  FROM MEMBER
+		 ORDER BY USERNO
+	</select>
+	
+	<!-- 회원 아이디로 검색용 쿼리문 -->
+	<select id="selectByUserId" parameterType="string" resultMap="memberResultSet">
+	SELECT *
+ 	  FROM MEMBER
+ 	 WHERE USERID = #{userId}
+	</select>
+	
+	<!-- 회원 이름 키워드 검색용 쿼리문 -->
+	<select id="selectByUserName" parameterType="string" resultMap="memberResultSet">
+	SELECT *
+	  FROM MEMBER
+	 WHERE USERNAME LIKE '%' || #{keyword} || '%'
+	</select> 
+	
+	<!-- 회원 정보 수정용 쿼리문 -->
+	<update id="updateMember" parameterType="member">
+	 	UPDATE MEMBER
+		   SET USERPWD = #{userPwd}
+		     , EMAIL = #{email}
+		     , PHONE = #{phone}
+		     , ADDRESS = #{address}
+		 WHERE USERID = #{userId}
+	</update>
+	
+	<!-- 회원 탈퇴용 쿼리문 -->
+	<delete id="deleteMember" parameterType="string">
+		DELETE
+		  FROM MEMBER
+		 WHERE USERID = #{userId}
+	</delete>
+	
+</mapper>
